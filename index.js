@@ -90,39 +90,23 @@ app.get("/index", (req, res) => {
         res.render("login", { req });
     }
 });
-// GET /about
-app.get("/about", (req, res) => {
-    if (req.session.loggedin) {
-        res.render("about", { req })
-    } else {
-        // Not logged in
-        res.render("login", { req });
-    }
-});
 
 // GET /data
-app.get("/data", (req, res) => {
-    const test = {
-        titre: "Test",
-        items: ["un", "deux", "trois"]
-    };
-    res.render("data", { model: test });
-});
-
-// GET /livres
-app.get("/livres", async(req, res) => {
-    const sql = "SELECT * FROM public.livres ORDER BY Titre";
+app.get("/data", async(req, res) => {
+    const sql = "SELECT * FROM livres ORDER BY Titre";
     pool.query(sql, [], (err, result) => {
-        if (err) {
-            return console.error(err.message);
+        if (req.session.loggedin) {
+            res.render("data", { req, model: result.rows });
+        } else {
+            // Not logged in
+            res.render("login", { req });
         }
-        res.render("livres", { model: result.rows });
     });
 });
 
 // GET /create
 app.get("/create", (req, res) => {
-    res.render("create", { model: {} });
+    res.render("create", { req, model: {} });
 });
 
 // POST /create
@@ -145,7 +129,7 @@ app.get("/edit/:id", (req, res) => {
         if (err) {
             return console.error(err.message);
         }
-        res.render("edit", { model: result.rows[0] });
+        res.render("edit", { req, model: result.rows[0] });
     });
 });
 
@@ -158,7 +142,7 @@ app.post("/edit/:id", (req, res) => {
         if (err) {
             return console.error(err.message);
         }
-        res.redirect("/livres");
+        res.redirect("/livres", { req });
     });
 });
 
@@ -170,7 +154,7 @@ app.get("/delete/:id", (req, res) => {
         if (err) {
             return console.error(err.message);
         }
-        res.render("delete", { model: result.rows[0] });
+        res.render("delete", { req, model: result.rows[0] });
     });
 });
 
@@ -182,7 +166,7 @@ app.post("/delete/:id", (req, res) => {
         if (err) {
             return console.error(err.message);
         }
-        res.redirect("/livres");
+        res.redirect("/livres", { req });
     });
 });
 
@@ -207,7 +191,7 @@ app.post('/login', (req, res) => {
                 req.session.loggedin = true;
                 req.session.username = username;
                 // Redirect to home page
-                res.redirect('/home');
+                res.redirect('/data');
             } else {
                 res.send('Incorrect Username and/or Password!');
             }
