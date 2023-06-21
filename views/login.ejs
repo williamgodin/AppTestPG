@@ -1,0 +1,12 @@
+<%- include("_header") -%>
+    <form action="/login" method="post">
+        <!-- user input-->
+        Matricule:<br>
+        <input type="text" name="username" placeholder="Matricule" required><br><br> Mot de passe<br>
+        <input type="password" name="password" placeholder="Mot de passe" required><br><br>
+        <!-- submit button -->
+        <input type="submit" value="Login">
+    </form>
+
+
+    <%- include("_footer") -%>

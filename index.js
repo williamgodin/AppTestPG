@@ -1,11 +1,22 @@
 const express = require("express");
 const path = require("path");
+const session = require('express-session');
 const { Pool } = require("pg");
 
 // Création du serveur Express
 const app = express();
 
 // Configuration du serveur
+app.use(session({
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+        secure: false, // Définissez cette option sur true si vous utilisez HTTPS
+        httpOnly: true, // Empêche l'accès au cookie depuis JavaScript côté client
+    }
+}));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
@@ -61,12 +72,32 @@ app.listen(3000, () => {
 // GET /
 app.get("/", (req, res) => {
     // res.send("Bonjour le monde...");
-    res.render("index");
+    if (req.session.loggedin) {
+        res.render("home")
+    } else {
+        // Not logged in
+        res.render("login");
+    }
+
 });
 
+//GET /index
+app.get("/index", (req, res) => {
+    if (req.session.loggedin) {
+        res.render("index")
+    } else {
+        // Not logged in
+        res.render("login");
+    }
+});
 // GET /about
 app.get("/about", (req, res) => {
-    res.render("about");
+    if (req.session.loggedin) {
+        res.render("about")
+    } else {
+        // Not logged in
+        res.render("login");
+    }
 });
 
 // GET /data
@@ -153,4 +184,51 @@ app.post("/delete/:id", (req, res) => {
         }
         res.redirect("/livres");
     });
+});
+
+//GET /login
+app.get("/login", (req, res) => {
+    res.render("login");
+});
+
+// POST /login
+app.post('/login', (req, res) => {
+    // Insert Login Code Here
+    let username = req.body.username;
+    let password = req.body.password;
+    if (username && password) {
+        // Execute SQL query that'll select the account from the database based on the specified username and password
+        pool.query('SELECT * FROM accounts WHERE username = $1 AND password = $2', [username, password], function(error, results, fields) {
+            // If there is an issue with the query, output the error
+            if (error) throw error;
+            // If the account exists
+            if (results.rows.length > 0) {
+                // Authenticate the user
+                req.session.loggedin = true;
+                req.session.username = username;
+                // Redirect to home page
+                res.redirect('/home');
+            } else {
+                res.send('Incorrect Username and/or Password!');
+            }
+            res.end();
+        });
+    } else {
+        res.send('Please enter Username and Password!');
+        res.end();
+    }
+});
+
+// GET /home
+app.get('/home', function(req, res) {
+
+    // If the user is logged in
+    if (req.session.loggedin) {
+        // Output username
+        res.send('Bienvenue, ' + req.session.username + '!');
+        res.render("home");
+    } else {
+        // Not logged in
+        res.render('login');
+    }
 });
