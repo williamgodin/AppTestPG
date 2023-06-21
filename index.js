@@ -73,10 +73,10 @@ app.listen(3000, () => {
 app.get("/", (req, res) => {
     // res.send("Bonjour le monde...");
     if (req.session.loggedin) {
-        res.render("home")
+        res.render("home", { req })
     } else {
         // Not logged in
-        res.render("login");
+        res.render("login", { req });
     }
 
 });
@@ -84,19 +84,19 @@ app.get("/", (req, res) => {
 //GET /index
 app.get("/index", (req, res) => {
     if (req.session.loggedin) {
-        res.render("index")
+        res.render("index", { req })
     } else {
         // Not logged in
-        res.render("login");
+        res.render("login", { req });
     }
 });
 // GET /about
 app.get("/about", (req, res) => {
     if (req.session.loggedin) {
-        res.render("about")
+        res.render("about", { req })
     } else {
         // Not logged in
-        res.render("login");
+        res.render("login", { req });
     }
 });
 
@@ -188,7 +188,7 @@ app.post("/delete/:id", (req, res) => {
 
 //GET /login
 app.get("/login", (req, res) => {
-    res.render("login");
+    res.render("login", { req });
 });
 
 // POST /login
@@ -225,10 +225,19 @@ app.get('/home', function(req, res) {
     // If the user is logged in
     if (req.session.loggedin) {
         // Output username
-        res.send('Bienvenue, ' + req.session.username + '!');
-        res.render("home");
+        res.render("home", { req, username: req.session.username });
     } else {
         // Not logged in
-        res.render('login');
+        res.render('login', { req });
     }
+});
+
+// GET /logout
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.log(err);
+        }
+        res.redirect('/home');
+    });
 });
