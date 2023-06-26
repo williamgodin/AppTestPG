@@ -4,9 +4,12 @@ const session = require('express-session');
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const { Pool } = require("pg");
+const bodyParser = require('body-parser');
 
 // Création du serveur Express
 const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // Configuration du serveur
 app.use(session({
@@ -152,7 +155,7 @@ app.get('/home', function(req, res) {
     // If the user is logged in
     if (req.session.loggedin) {
         // Output username
-        res.render("home", { req, username: req.session.username });
+        res.render("data", { req, username: req.session.username });
     } else {
         // Not logged in
         res.render('login', { req });
@@ -167,4 +170,78 @@ app.get('/logout', (req, res) => {
         }
         res.redirect('/home');
     });
+});
+//GET /forgot
+app.get("/forgot-password", (req, res) => {
+    res.render("forgot-password", { req, model: {} });
+});
+
+//GET /forgot
+app.get("/reset-password", (req, res) => {
+    res.render("reset-password", { req, model: {} });
+});
+
+
+
+
+
+
+// POST /forgot-password
+app.post('/forgot-password', (req, res) => {
+    const { username, email } = req.body;
+
+    // Vérifier l'existence de l'utilisateur dans la base de données
+    if (username && email) {
+        // Execute SQL query that'll select the account from the database based on the specified username and password
+        pool.query('SELECT * FROM connectdata WHERE username = $1 AND email = $2', [username, email], function(error, results, fields) {
+            // If there is an issue with the query, output the error
+            if (error) throw error;
+            // If the account exists
+            if (results.rows.length > 0) {
+                // Tableau pour stocker les jetons de réinitialisation
+                const resetTokens = new Map();
+                // Générer un jeton de réinitialisation unique
+                const resetToken = crypto.randomBytes(32).toString('hex');
+                // Stocker le jeton de réinitialisation dans la base de données ou en mémoire (dans cet exemple, nous utilisons un Map)
+                resetTokens.set(username, resetToken);
+
+                // Redirect to home page
+                // Envoyer l'e-mail de réinitialisation avec le lien contenant le jeton
+                const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+                const mailOptions = {
+                    from: 'w.godin53@gmail.com',
+                    to: email,
+                    subject: 'Réinitialisation de mot de passe',
+                    text: `Pour réinitialiser votre mot de passe, veuillez cliquer sur le lien suivant : ${resetURL}`
+                };
+                // Configuration du transporteur SMTP pour l'envoi des e-mails
+                const transporter = nodemailer.createTransport({
+                    host: 'smtp.gmail.com',
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: 'w.godin53@gmail.com',
+                        pass: 'zwewtqnxbanprlth'
+                    }
+                });
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.error('Erreur lors de l\'envoi de l\'e-mail de réinitialisation :', error);
+                        res.status(500).send('Une erreur est survenue lors de la réinitialisation du mot de passe.');
+                    } else {
+                        console.log('E-mail de réinitialisation envoyé :', info.response);
+                        res.send('Un e-mail de réinitialisation a été envoyé à votre adresse e-mail.');
+                        res.redirect('/login');
+                    }
+                });
+
+            } else {
+                res.send('Incorrect Username and/or Password!');
+            }
+            res.end();
+        });
+    } else {
+        res.send('Please enter Username and Password!');
+        res.end();
+    }
 });
