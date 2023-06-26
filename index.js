@@ -1,6 +1,8 @@
 const express = require("express");
 const path = require("path");
 const session = require('express-session');
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const { Pool } = require("pg");
 
 // Création du serveur Express
@@ -26,7 +28,7 @@ app.use(express.urlencoded({ extended: false }));
 const pool = new Pool({
     user: "postgres",
     host: "localhost",
-    database: "Test",
+    database: "Rapport",
     password: "postgres",
     port: 5432
 });
@@ -93,7 +95,7 @@ app.get("/index", (req, res) => {
 
 // GET /data
 app.get("/data", async(req, res) => {
-    const sql = "SELECT * FROM livres ORDER BY Titre";
+    const sql = "SELECT * FROM ca ORDER BY montant";
     pool.query(sql, [], (err, result) => {
         if (req.session.loggedin) {
             res.render("data", { req, model: result.rows });
@@ -109,66 +111,7 @@ app.get("/create", (req, res) => {
     res.render("create", { req, model: {} });
 });
 
-// POST /create
-app.post("/create", (req, res) => {
-    const sql = "INSERT INTO Livres (Titre, Auteur, Commentaires) VALUES ($1, $2, $3)";
-    const book = [req.body.titre, req.body.auteur, req.body.commentaires];
-    pool.query(sql, book, (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.redirect("/livres");
-    });
-});
 
-// GET /edit/5
-app.get("/edit/:id", (req, res) => {
-    const id = req.params.id;
-    const sql = "SELECT * FROM Livres WHERE Livre_ID = $1";
-    pool.query(sql, [id], (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.render("edit", { req, model: result.rows[0] });
-    });
-});
-
-// POST /edit/5
-app.post("/edit/:id", (req, res) => {
-    const id = req.params.id;
-    const book = [req.body.titre, req.body.auteur, req.body.commentaires, id];
-    const sql = "UPDATE Livres SET Titre = $1, Auteur = $2, Commentaires = $3 WHERE (Livre_ID = $4)";
-    pool.query(sql, book, (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.redirect("/livres", { req });
-    });
-});
-
-// GET /delete/5
-app.get("/delete/:id", (req, res) => {
-    const id = req.params.id;
-    const sql = "SELECT * FROM Livres WHERE Livre_ID = $1";
-    pool.query(sql, [id], (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.render("delete", { req, model: result.rows[0] });
-    });
-});
-
-// POST /delete/5
-app.post("/delete/:id", (req, res) => {
-    const id = req.params.id;
-    const sql = "DELETE FROM Livres WHERE Livre_ID = $1";
-    pool.query(sql, [id], (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.redirect("/livres", { req });
-    });
-});
 
 //GET /login
 app.get("/login", (req, res) => {
@@ -182,7 +125,7 @@ app.post('/login', (req, res) => {
     let password = req.body.password;
     if (username && password) {
         // Execute SQL query that'll select the account from the database based on the specified username and password
-        pool.query('SELECT * FROM accounts WHERE username = $1 AND password = $2', [username, password], function(error, results, fields) {
+        pool.query('SELECT * FROM connectdata WHERE username = $1 AND password = $2', [username, password], function(error, results, fields) {
             // If there is an issue with the query, output the error
             if (error) throw error;
             // If the account exists
