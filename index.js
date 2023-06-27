@@ -98,7 +98,7 @@ app.get("/index", (req, res) => {
 
 // GET /data
 app.get("/data", async(req, res) => {
-    const sql = "SELECT * FROM ca ORDER BY montant";
+    const sql = "SELECT * FROM ca ORDER BY montant ASC";
     pool.query(sql, [], (err, result) => {
         if (req.session.loggedin) {
             res.render("data", { req, model: result.rows });
@@ -207,7 +207,7 @@ app.post('/forgot-password', (req, res) => {
 
                 // Redirect to home page
                 // Envoyer l'e-mail de réinitialisation avec le lien contenant le jeton
-                const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+                const resetURL = `http://localhost:3000/reset-password/${resetTokens}`;
                 const mailOptions = {
                     from: 'w.godin53@gmail.com',
                     to: email,
@@ -230,7 +230,6 @@ app.post('/forgot-password', (req, res) => {
                         res.status(500).send('Une erreur est survenue lors de la réinitialisation du mot de passe.');
                     } else {
                         console.log('E-mail de réinitialisation envoyé :', info.response);
-                        res.send('Un e-mail de réinitialisation a été envoyé à votre adresse e-mail.');
                         res.redirect('/login');
                     }
                 });
