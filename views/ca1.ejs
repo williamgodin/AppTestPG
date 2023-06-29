@@ -1,33 +1,30 @@
 <%- include("_header") -%>
 
-    <h1>Liste des livres (
-        <%= model.length %>)</h1>
 
     <div class="table-responsive-sm">
         <table class="table table-hover">
             <thead>
                 <tr>
+                    <th>Date</th>
                     <th>Montant</th>
                     <th>Vendeur</th>
                     <th>Region</th>
-                    <th>Date</th>
-
                 </tr>
             </thead>
             <tbody>
-                <% for (const ca of model) { %>
+                <% for (const book of model) { %>
                     <tr>
                         <td>
-                            <%= ca.montant %>
+                            <%= book.date %>
                         </td>
                         <td>
-                            <%= ca.vendeurId %>
+                            <%= book.montant %>
                         </td>
                         <td>
-                            <%= ca.regionId %>
+                            <%= book.vendeurId %>
                         </td>
                         <td>
-                            <%= ca.date %>
+                            <%= book.regionId %>
                         </td>
                     </tr>
                     <% } %>

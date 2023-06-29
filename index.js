@@ -96,23 +96,40 @@ app.get("/index", (req, res) => {
     }
 });
 
-// GET /data
-app.get("/data", async(req, res) => {
-    const sql = "SELECT * FROM ca ORDER BY montant ASC";
-    pool.query(sql, [], (err, result) => {
-        if (req.session.loggedin) {
-            res.render("data", { req, model: result.rows });
-        } else {
-            // Not logged in
-            res.render("login", { req });
-        }
-    });
+//GET /ca
+app.get("/ca", (req, res) => {
+    const sql = "SELECT * FROM ca ";
+    let regions = [];
+    let vendeurs = [];
+    const filtreReg = "SELECT * FROM region";
+    const filtreVen = "SELECT * FROM vendeur";
+    if (req.session.loggedin) {
+        pool.query(filtreReg, [], (err, tab) => {
+            if (err) {
+                return console.error(err.message);
+            }
+            regions = tab.rows;
+
+            pool.query(filtreVen, [], (err, tab1) => {
+                if (err) {
+                    return console.error(err.message);
+                }
+                vendeurs = tab1.rows;
+
+                pool.query(sql, [], (err, result) => {
+                    if (err) {
+                        return console.error(err.message);
+                    }
+                    res.render("ca", { req: req, model: result.rows, regions: regions, vendeurs: vendeurs });
+                });
+            });
+        });
+    } else {
+        // Not logged in
+        res.render("login", { req: req });
+    }
 });
 
-// GET /create
-app.get("/create", (req, res) => {
-    res.render("create", { req, model: {} });
-});
 
 
 
@@ -137,7 +154,7 @@ app.post('/login', (req, res) => {
                 req.session.loggedin = true;
                 req.session.username = username;
                 // Redirect to home page
-                res.redirect('/data');
+                res.redirect('/ca');
             } else {
                 res.send('Incorrect Username and/or Password!');
             }
@@ -207,7 +224,7 @@ app.post('/forgot-password', (req, res) => {
 
                 // Redirect to home page
                 // Envoyer l'e-mail de réinitialisation avec le lien contenant le jeton
-                const resetURL = `http://localhost:3000/reset-password/${resetTokens}`;
+                const resetURL = `http://localhost:3000/reset-password/`;
                 const mailOptions = {
                     from: 'w.godin53@gmail.com',
                     to: email,
@@ -243,4 +260,28 @@ app.post('/forgot-password', (req, res) => {
         res.send('Please enter Username and Password!');
         res.end();
     }
+});
+
+// GET ca1
+app.get("/ca1/:id", (req, res) => {
+    const id = req.params.id
+    const sql = "SELECT * FROM ca WHERE \"regionId\" = $1";
+    pool.query(sql, [id], (err, result) => {
+        if (err) {
+            return console.error(err.message);
+        }
+        res.render("ca1", { req: req, model: result.rows });
+    });
+});
+
+// GET ca2
+app.get("/ca2/:id", (req, res) => {
+    const id = req.params.id
+    const sql = "SELECT * FROM ca WHERE \"vendeurId\" = $1";
+    pool.query(sql, [id], (err, result) => {
+        if (err) {
+            return console.error(err.message);
+        }
+        res.render("ca2", { req: req, model: result.rows });
+    });
 });

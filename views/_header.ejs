@@ -16,7 +16,9 @@
             <a class="navbar-brand" href="/home">Accueil</a>
             <ul class="navbar-nav mr-auto">
                 <% if (req.session.loggedin) { %>
+                    <a class="btn btn-sm btn-warning" href="/ca">Afficher tout les ca</a>
                     <th class="d-print-none">
+
                         <a class="btn btn-sm btn-danger" href="/logout">Déconnexion</a>
                     </th>
                     <% } else { %>
