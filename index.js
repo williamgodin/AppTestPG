@@ -264,24 +264,37 @@ app.post('/forgot-password', (req, res) => {
 
 // GET ca1
 app.get("/ca1/:id", (req, res) => {
-    const id = req.params.id
-    const sql = "SELECT * FROM ca WHERE \"regionId\" = $1";
-    pool.query(sql, [id], (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.render("ca1", { req: req, model: result.rows });
-    });
+    if (req.session.loggedin) {
+        const id = req.params.id
+        const sql = "SELECT * FROM ca WHERE \"regionId\" = $1";
+        pool.query(sql, [id], (err, result) => {
+            if (err) {
+                return console.error(err.message);
+            }
+            res.render("ca1", { req: req, model: result.rows });
+        });
+
+    } else {
+        // Not logged in
+        res.render('login', { req });
+    }
 });
 
 // GET ca2
 app.get("/ca2/:id", (req, res) => {
-    const id = req.params.id
-    const sql = "SELECT * FROM ca WHERE \"vendeurId\" = $1";
-    pool.query(sql, [id], (err, result) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        res.render("ca2", { req: req, model: result.rows });
-    });
+    if (req.session.loggedin) {
+        // Output username
+        const id = req.params.id
+        const sql = "SELECT * FROM ca WHERE \"vendeurId\" = $1";
+        pool.query(sql, [id], (err, result) => {
+            if (err) {
+                return console.error(err.message);
+            }
+            res.render("ca2", { req: req, model: result.rows });
+        });
+    } else {
+        // Not logged in
+        res.render('login', { req });
+    }
+
 });
